@@ -188,9 +188,9 @@ El notebook crea una base de modelizacion llamada `df_modelo_impagos` y la expor
 
 Resultado generado:
 
-- `Datasets/fusionado_features_impagos.csv`: 1.773 filas y 822 columnas.
+- `Datasets/fusionado_features_impagos.csv`: 1.777 filas y 1.058 columnas.
 - Variable objetivo unica: `Y`.
-- Tasa de impago en la base modelable: `9,42%`.
+- Tasa de impago en la base modelable: `9,45%`.
 - Se eliminan las empresas sin variable objetivo disponible.
 
 Detalle de variables implementadas:
@@ -201,15 +201,20 @@ Detalle de variables implementadas:
 | `log_sales` | Continua transformada | `log1p(Importe neto de la cifra de negocios)`. Solo se aplica a valores no negativos. |
 | `log_employees` | Continua transformada | `log1p(Numero empleados)`. Solo se aplica a valores no negativos. |
 | `equity` | Continua monetaria | Patrimonio neto sin normalizar. |
+| `working_capital` | Continua monetaria | `Activo corriente - Pasivo corriente`. |
+| `working_capital_change` | Continua monetaria | Variacion anual absoluta del fondo de maniobra: `working_capital_N - working_capital_N-1`. En 2008 queda nula. |
 | `current_ratio` | Continua, ratio | `Activo corriente / Pasivo corriente`. Mide liquidez corriente. |
 | `quick_ratio` | Continua, ratio | `(Activo corriente - Existencias) / Pasivo corriente`. Mide liquidez sin inventarios. |
 | `cash_ratio` | Continua, ratio | `Efectivo y otros activos liquidos equivalentes / Pasivo corriente`. |
 | `working_capital_to_assets` | Continua, ratio | `(Activo corriente - Pasivo corriente) / Total activo`. |
 | `cash_to_assets` | Continua, ratio | `Efectivo / Total activo`. |
+| `asset_turnover` | Continua, ratio | Ventas / Total activo. |
 | `inventory_to_sales` | Continua, ratio | `Existencias / Ventas`. |
+| `idle_inventory_index` | Continua, ratio | Variacion anual de existencias / Ventas. En 2008 queda nula. |
 | `receivables_to_sales` | Continua, ratio | `Deudores comerciales y otras cuentas a cobrar / Ventas`. |
 | `payables_to_sales` | Continua, ratio | `Acreedores comerciales y otras cuentas a pagar / Ventas`. |
 | `payables_to_assets` | Continua, ratio | `Acreedores comerciales y otras cuentas a pagar / Total activo`. |
+| `payables_to_current_liabilities` | Continua, ratio | `Acreedores comerciales y otras cuentas a pagar / Pasivo corriente`. |
 | `dso` | Continua, dias | `(Deudores / Ventas) * 365`. Dias aproximados de cobro. |
 | `dio` | Continua, dias | `(Existencias / abs(Aprovisionamientos)) * 365`. Dias aproximados de inventario. |
 | `dpo` | Continua, dias | `(Acreedores / abs(Aprovisionamientos)) * 365`. Dias aproximados de pago. |
@@ -217,6 +222,7 @@ Detalle de variables implementadas:
 | `total_liabilities_to_assets` | Continua, ratio | `(Pasivo no corriente + Pasivo corriente) / Total activo`. |
 | `financial_debt_to_assets` | Continua, ratio | Deuda financiera / Total activo. La deuda financiera suma deudas a largo plazo, deudas a corto plazo y leasing. |
 | `financial_debt_to_ebitda` | Continua, ratio | Deuda financiera / EBITDA proxy. |
+| `financial_debt_to_ebitda_change` | Continua, variacion | Variacion anual de `financial_debt_to_ebitda`. En 2008 queda nula. |
 | `net_debt_to_ebitda` | Continua, ratio | `(Deuda financiera - Efectivo) / EBITDA proxy`. |
 | `debt_to_equity` | Continua, ratio | Pasivo total / Patrimonio neto. |
 | `financial_debt_to_equity` | Continua, ratio | Deuda financiera / Patrimonio neto. |
@@ -227,12 +233,20 @@ Detalle de variables implementadas:
 | `net_margin` | Continua, ratio | Resultado del ejercicio / Ventas. |
 | `roa` | Continua, ratio | Resultado del ejercicio / Total activo. |
 | `roe` | Continua, ratio | Resultado del ejercicio / Patrimonio neto. |
+| `equity_erosion_speed` | Continua, ratio | Resultado del ejercicio del año N / Patrimonio neto del año N-1. En 2008 queda nula. |
 | `interest_coverage_ebit` | Continua, ratio | EBIT / `abs(Gastos financieros)`. |
 | `interest_coverage_ebitda` | Continua, ratio | EBITDA proxy / `abs(Gastos financieros)`. |
 | `financial_expense_to_sales` | Continua, ratio | `abs(Gastos financieros) / Ventas`. |
 | `financial_expense_to_revenue` | Continua, ratio | `abs(Gastos financieros) / Ingresos totales`. |
 | `operating_cost_to_sales` | Continua, ratio | Costes operativos / Ventas. |
 | `personnel_cost_to_sales` | Continua, ratio | `abs(Gastos de personal) / Ventas`. |
+| `personnel_safety_margin` | Continua, ratio | `(Ventas - abs(Gastos de personal)) / Ventas`. Complementa `personnel_cost_to_sales`. |
+| `loss_self_financing` | Continua, ratio | Resultado del ejercicio / Reservas. |
+| `ghost_assets_to_equity` | Continua, ratio | `(Inmovilizado intangible + Activos por impuesto diferido) / Patrimonio neto`. |
+| `real_asset_rigidity` | Continua, ratio | `(Inmovilizado material + Existencias) / Total activo`. |
+| `sales_per_employee` | Continua, productividad | Ventas / Numero empleados. |
+| `subsidies_to_assets` | Continua, ratio | Subvenciones, donaciones y legados recibidos / Total activo. |
+| `sales_personnel_growth_differential` | Continua, variacion | Crecimiento porcentual anual de ventas menos crecimiento porcentual anual de gastos de personal. En 2008 queda nula. |
 | `free_cash_flow` | Continua monetaria | Proxy contable de flujo de caja libre. Se detalla debajo. |
 | `free_cash_flow_to_sales` | Continua, ratio | `free_cash_flow / Ventas`. |
 | `free_cash_flow_to_assets` | Continua, ratio | `free_cash_flow / Total activo`. |
@@ -285,6 +299,9 @@ Variables de tendencia y deterioro:
 | `cash_declined_2_or_more_years` | Binaria 0/1 | Vale 1 si `cash_to_assets` desciende en al menos dos transiciones anuales. |
 | `equity_declined_2_or_more_years` | Binaria 0/1 | Vale 1 si `equity` desciende en al menos dos transiciones anuales. |
 | `debt_increased_2_or_more_years` | Binaria 0/1 | Vale 1 si `financial_debt_to_assets` aumenta en al menos dos transiciones anuales. |
+| `working_capital_declined_2_or_more_years` | Binaria 0/1 | Vale 1 si el fondo de maniobra absoluto desciende en al menos dos transiciones anuales. |
+| `negative_working_capital_change_years` | Conteo entero | Numero de ejercicios con `working_capital_change < 0`. |
+| `financial_debt_ebitda_accelerated_2_or_more_years` | Binaria 0/1 | Vale 1 si la variacion anual de `financial_debt_to_ebitda` es positiva en al menos dos ejercicios. |
 | `consecutive_loss_years` | Conteo entero | Racha maxima de ejercicios consecutivos con `loss_flag = 1`. |
 
 Variables de auditoria:
@@ -311,6 +328,7 @@ Variables sectoriales y geograficas:
 | `roa_vs_cnae_median` | Continua relativa | `2011_roa` menos mediana del CNAE. |
 | `sales_growth_vs_cnae_median` | Continua relativa | `log_sales_pct_change_2011_2008` menos mediana del CNAE. |
 | `cash_assets_vs_cnae_median` | Continua relativa | `2011_cash_to_assets` menos mediana del CNAE. |
+| `sales_per_employee_vs_cnae_median` | Continua relativa | `2011_sales_per_employee` menos mediana del CNAE. |
 
 Variables de validez de ratios:
 
@@ -350,7 +368,7 @@ El notebook incluye un modelo Logit general con seleccion supervisada de variabl
 Pipeline propuesto:
 
 ```text
-140 features (train+test)
+176 features documentadas antes de seleccion supervisada
         |
 Imputacion + escalado
         |
